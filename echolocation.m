@@ -32,7 +32,6 @@ threshold = max(data)*1.5; %set threshold, 1.5 multiplier is arbitrary
 disp(['Threshold is: ' num2str(threshold)]);
 
 %get system delay
-% pause on; pause;
 disp('Calculating the system delay');
 % play(audio);
 rec.StartFcn = 'play(audio);';
