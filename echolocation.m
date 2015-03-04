@@ -1,51 +1,57 @@
 function echolocation
-global Fs;
-global rec;
-global audio;
 
-%create tone
-F1 = 5000; %tone frequency
-Fs = 44100; %sampling frequency
-play_duration = 1000; %play duraction in ms
-t = 0:Fs*play_duration/1000';
-s1 = cos(2*pi*F1*t/Fs); %create waveform
+dirName = '..\Audacity\';
+listing = dir(fullfile(dirName, '*.wav')); %get .wav files
 
-audio = audioplayer(s1, Fs);
+for fileNum = 1:length(listing)
+    fileName = strcat(dirName, listing(fileNum).name);
+    disp(fileName);
+    [y1, Fs] = audioread(fileName);
+    % sound(y, Fs);
+    
+    frameSize = 10; %size of frame
+    last = ceil(length(y1)/frameSize);
+    start = 1;
+    y2 = zeros([last,1]); %initialize the output array
+    
+    for index = 1:last
+        stop = frameSize * index - 1; %index of last element of the frame
+        scaling = 1;
+        if index == last %don't exceed end of matrix
+            stop = length(y1);
+            scaling = (stop-start)/frameSize; %correctly scale RMS for shortened frame
+        end
+        value = rms(y1(start:stop)) * scaling;
+        y2(index) = value; %append new RMS value
+        start = stop + 1; % new starting point
+    end
+    analyze(y2);
+    return
+end
 
-%create audio recorder: 44100 Hz, 16 bits, mono, default channel
-rec = audiorecorder(Fs, 16, 1);
-delay = setup;
+function analyze(y)
+figure;
+plot(y);
 
-% Determine the delay in the system with a test tone
-function [delay] = setup
-global Fs;
-global rec;
-global audio;
-% play(audio);
-
-%get the silence threshold over 1 second
-disp('Generating silence threshold');
-rec_duration = 2000; %record duration in ms
-recordblocking(rec, rec_duration/1000);
-data = getaudiodata(rec); %get data
-threshold = max(data)*1.5; %set threshold, 1.5 multiplier is arbitrary
-disp(['Threshold is: ' num2str(threshold)]);
-
-%get system delay
-disp('Calculating the system delay');
-% play(audio);
-rec.StartFcn = 'play(audio);';
-% rec.StopFcn = 'data = getaudiodata(rec);';
-recordblocking(rec, rec_duration/1000);
-data = getaudiodata(rec);
-
-for index = 1:Fs*rec_duration/1000;
-%     threshold = 0;
-    if abs(data(index,1)) < threshold %check threshold value on col 1
-        data(index,1) = 0;
+%find the start index
+startIndex = 0;
+threshold = 5; %start signal threshold
+for index = 1:length(y)
+%     disp(index); disp(y(index));
+    if y(index) > threshold*mean(y(1:100));
+        startIndex = index;
+%         break
     end
 end
-figure(1);
-plot(data);
 
-delay = 1;
+%find the stop index
+stopIndex = 0;
+len = length(y);
+threshold = 5; %start signal threshold
+for i = 0:len-1
+    index = len - i;
+    if y(index) > threshold*mean(y(len-99:len));
+        stopIndex = index;
+        break
+    end
+end
