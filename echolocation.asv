@@ -79,7 +79,7 @@ function analyze(y, fileName)
         return
     end
     timePerFrame = 25/(stopIndex-startIndex); %ms/frame
-    time = timePerFrame * (peakIndex-startIndex)
+    
     dist = timePerFrame *(peakIndex-startIndex) * 1.127 / 2; %main calculation
     output = sprintf('Distance: %.3f ft\n', dist);
     disp(output);
