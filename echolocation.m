@@ -1,5 +1,5 @@
 function echolocation
-    dirName = '..\Audacity\';
+    dirName = '.\Audacity\';
     listing = dir(fullfile(dirName, '*.wav')); %get .wav files
 
     for fileNum = 1:length(listing)
