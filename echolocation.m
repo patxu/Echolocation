@@ -4,12 +4,12 @@ function echolocation
 
     for fileNum = 1:length(listing)
         fileName = strcat(dirName, listing(fileNum).name);
-        disp(fileName);
+        disp(strcat('File: ', fileName));
         [y1, Fs] = audioread(fileName);
         % sound(y, Fs);
         y2 = split(y1); %frames
         analyze(y2, listing(fileNum).name);
-        return
+%         return
     end
 end
 
@@ -50,28 +50,37 @@ function analyze(y, fileName)
             break
         end
     end
+    if startIndex == 0
+        disp('Couldn''t calculate startIndex');
+        return
+    end
     startIndex = getMax(startIndex, y);
 
     %find the stopping index
     stopIndex = 0;
     len = length(y);
-    threshold = 15; %start signal threshold
-    for i = 0:len-1-startIndex
+    threshold = 10; %start signal threshold
+    for i = 0:len-1
         index = len - i; %TODO
         if y(index) > threshold*mean(y(len-99:len));
             stopIndex = index;
             break
         end
     end
+    if stopIndex == 0
+        disp('Couldn''t calculate stopIndex');
+        return
+    end
     stopIndex = getMax(stopIndex, y);
     
     peakIndex = getPeak(startIndex, stopIndex, y);
     if peakIndex == 0 %error getting peakIndex
+        disp('Couldn''t calculate peakIndex');
         return
     end
     timePerFrame = 25/(stopIndex-startIndex); %ms/frame
     dist = timePerFrame *(peakIndex-startIndex) * 1.127 / 2;
-    output = sprintf('Distance: %.3f ft', dist);
+    output = sprintf('Distance: %.3f ft\n', dist);
     disp(output);
 end
 
@@ -92,7 +101,7 @@ end
 function myIndex = getPeak(startIndex, stopIndex, y)
     myIndex = 0;
     max = 0;
-    buffer = 15; %ignore area near peaks
+    buffer = 20; %ignore area near peaks
     for index = (startIndex+buffer):(stopIndex-buffer) 
         if y(index) > max
             myIndex = index;
